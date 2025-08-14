@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日飲食份量紀錄</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="飲食紀錄">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+    body { font-family: Arial, sans-serif; padding: 10px; background: #f8f8f8; }
+    h2 { margin-top: 20px; }
+    .section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+    input, select, button { padding: 5px; margin: 3px 0; font-size: 16px; }
+    button { background: #4CAF50; color: white; border: none; border-radius: 5px; padding: 6px 10px; }
+    .remaining { display: grid; grid-template-columns: repeat(1, 1fr); gap: 10px; }
+    .rem-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; align-items: center; }
+    .zero { background: #ffcccc; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h2>每日總份量設定</h2>
+<div class="section" id="setup">
+    主食：<input type="number" id="totalMain" placeholder="份數">
+    肉類：<input type="number" id="totalMeat" placeholder="份數">
+    蔬菜：<input type="number" id="totalVeg" placeholder="份數">
+    水果：<input type="number" id="totalFruit" placeholder="份數">
+    <button onclick="saveSettings()">儲存設定</button>
+</div>
+
+<h2>輸入餐別與扣除份量</h2>
+<div class="section">
+    餐別：<select id="mealSelect"></select>
+    <div class="remaining">
+        <div class="rem-row">
+            <div id="remMain">主食：0</div>
+            <input type="number" id="amtMain" placeholder="份量">
+        </div>
+        <div class="rem-row">
+            <div id="remMeat">肉類：0</div>
+            <input type="number" id="amtMeat" placeholder="份量">
+        </div>
+        <div class="rem-row">
+            <div id="remVeg">蔬菜：0</div>
+            <input type="number" id="amtVeg" placeholder="份量">
+        </div>
+        <div class="rem-row">
+            <div id="remFruit">水果：0</div>
+            <input type="number" id="amtFruit" placeholder="份量">
+        </div>
+    </div>
+    <button onclick="deductAll()">一次扣除並紀錄</button>
+</div>
+
+<h2>紀錄列表</h2>
+<div class="section">
+    <table>
+        <thead>
+            <tr><th>餐別</th><th>類別</th><th>份量</th></tr>
+        </thead>
+        <tbody id="recordTable"></tbody>
+    </table>
+</div>
+
+<script>
+const categories = { main: '主食', meat: '肉類', veg: '蔬菜', fruit: '水果' };
+const meals = ["早餐","上午加餐","午餐","下午加餐","晚餐","宵夜"];
+
+function populateMealSelect() {
+    let sel = document.getElementById('mealSelect');
+    sel.innerHTML = "";
+    meals.forEach(m => {
+        let opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        sel.appendChild(opt);
+    });
+}
+
+function saveSettings() {
+    let totals = {
+        main: parseInt(document.getElementById('totalMain').value) || 0,
+        meat: parseInt(document.getElementById('totalMeat').value) || 0,
+        veg: parseInt(document.getElementById('totalVeg').value) || 0,
+        fruit: parseInt(document.getElementById('totalFruit').value) || 0
+    };
+    localStorage.setItem('totals', JSON.stringify(totals));
+    localStorage.setItem('remaining', JSON.stringify(totals));
+    updateRemainingDisplay();
+    alert("設定已儲存，您可以將此網頁加到主畫面方便快速開啟！");
+}
+
+function updateRemainingDisplay() {
+    let remaining = JSON.parse(localStorage.getItem('remaining')) || {main:0, meat:0, veg:0, fruit:0};
+    for (let key in remaining) {
+        let el = document.getElementById('rem' + key.charAt(0).toUpperCase() + key.slice(1));
+        el.textContent = categories[key] + '：' + remaining[key];
+        el.classList.toggle('zero', remaining[key] <= 0);
+    }
+}
+
+function deduct(category, amount) {
+    let remaining = JSON.parse(localStorage.getItem('remaining')) || {};
+    if (remaining[category] !== undefined) {
+        remaining[category] = Math.max(0, remaining[category] - amount);
+    }
+    localStorage.setItem('remaining', JSON.stringify(remaining));
+}
+
+function recordMeal(meal, cat, amt) {
+    let table = document.getElementById('recordTable');
+    let row = table.insertRow();
+    row.insertCell(0).textContent = meal;
+    row.insertCell(1).textContent = categories[cat];
+    row.insertCell(2).textContent = amt;
+}
+
+function deductAll() {
+    let meal = document.getElementById('mealSelect').value;
+    let amounts = {
+        main: parseInt(document.getElementById('amtMain').value) || 0,
+        meat: parseInt(document.getElementById('amtMeat').value) || 0,
+        veg: parseInt(document.getElementById('amtVeg').value) || 0,
+        fruit: parseInt(document.getElementById('amtFruit').value) || 0
+    };
+    for (let key in amounts) {
+        if (amounts[key] > 0) {
+            deduct(key, amounts[key]);
+            recordMeal(meal, key, amounts[key]);
+            document.getElementById('amt' + key.charAt(0).toUpperCase() + key.slice(1)).value = '';
+        }
+    }
+    updateRemainingDisplay();
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    populateMealSelect();
+    updateRemainingDisplay();
+});
+</script>
+
+</body>
+</html>
