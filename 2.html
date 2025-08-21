@@ -1,233 +1,191 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>每日飲食份量紀錄</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="飲食紀錄">
-<link rel="apple-touch-icon" href="icon.png">
-<style>
-    body { font-family: Arial, sans-serif; padding: 10px; background: #f8f8f8; }
-    h2 { margin-top: 20px; }
-    .section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
-    input, select, button { padding: 5px; margin: 3px 0; font-size: 16px; }
-    button { background: #4CAF50; color: white; border: none; border-radius: 5px; padding: 6px 10px; }
-    .remaining { display: grid; grid-template-columns: 1fr; gap: 10px; }
-    .rem-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; }
-    .zero { background: #ffefef; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid2 label { display: flex; justify-content: space-between; align-items: center; }
-    .grid2 input { flex: 1; margin-left: 5px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>飲食份量紀錄</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      transition: background-image 0.8s ease-in-out;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      margin-top: 20px;
+    }
+    .section {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px 0;
+    }
+    label input, label select {
+      flex: 0 0 150px;
+      margin-left: 10px;
+    }
+    .btn {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #recordList {
+      list-style: none;
+      padding: 0;
+    }
+    #recordList li {
+      margin: 5px 0;
+      padding: 5px;
+      border-bottom: 1px solid #ccc;
+      font-size: 14px;
+    }
+    .negative {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-
-<h2>每日總份量設定</h2>
-<div class="section">
-    <div class="grid2">
-        <label>主食：<input type="number" id="totalMain" placeholder="份數" step="0.1"></label>
-        <label>肉類：<input type="number" id="totalMeat" placeholder="份數" step="0.1"></label>
-        <label>肉類（植物性蛋白）：<input type="number" id="totalPlant" placeholder="份數" step="0.1"></label>
-        <label>蔬菜：<input type="number" id="totalVeg" placeholder="份數" step="0.1"></label>
-        <label>蔬菜（水溶性纖維）：<input type="number" id="totalFiber" placeholder="份數" step="0.1"></label>
-        <label>水果：<input type="number" id="totalFruit" placeholder="份數" step="0.1"></label>
+  <div class="container">
+    <h2>每日總份量設定</h2>
+    <div class="section">
+      <label>主食：<input type="number" id="totalMain" step="0.1"></label>
+      <label>肉類：<input type="number" id="totalMeat" step="0.1"></label>
+      <label>肉類（植物性蛋白）：<input type="number" id="totalPlant" step="0.1"></label>
+      <label>蔬菜：<input type="number" id="totalVeg" step="0.1"></label>
+      <label>蔬菜（水溶性纖維）：<input type="number" id="totalFiber" step="0.1"></label>
+      <label>水果：<input type="number" id="totalFruit" step="0.1"></label>
+      <button class="btn" onclick="saveSettings()">儲存設定</button>
     </div>
-    <button onclick="saveSettings()">儲存設定</button>
-</div>
 
-<h2>輸入餐別與扣除份量</h2>
-<div class="section">
-    餐別：<select id="mealSelect"></select>
-    <div class="remaining">
-        <div class="rem-row">
-            <div id="remMain">主食：0</div>
-            <input type="number" id="amtMain" placeholder="份量" step="0.1">
-        </div>
-        <div class="rem-row">
-            <div id="remMeat">肉類：0</div>
-            <input type="number" id="amtMeat" placeholder="份量" step="0.1">
-        </div>
-        <div class="rem-row">
-            <div id="remPlant">肉類（植物性蛋白）：0</div>
-            <input type="number" id="amtPlant" placeholder="份量" step="0.1">
-        </div>
-        <div class="rem-row">
-            <div id="remVeg">蔬菜：0</div>
-            <input type="number" id="amtVeg" placeholder="份量" step="0.1">
-        </div>
-        <div class="rem-row">
-            <div id="remFiber">蔬菜（水溶性纖維）：0</div>
-            <input type="number" id="amtFiber" placeholder="份量" step="0.1">
-        </div>
-        <div class="rem-row">
-            <div id="remFruit">水果：0</div>
-            <input type="number" id="amtFruit" placeholder="份量" step="0.1">
-        </div>
+    <h2>輸入餐別與扣除份量</h2>
+    <div class="section">
+      <label>餐別：
+        <select id="mealSelect">
+          <option>早餐</option>
+          <option>上午加餐</option>
+          <option>午餐</option>
+          <option>下午加餐</option>
+          <option>晚餐</option>
+          <option>宵夜</option>
+        </select>
+      </label>
+      <label>主食：<input type="number" id="deductMain" step="0.1"></label>
+      <label>肉類：<input type="number" id="deductMeat" step="0.1"></label>
+      <label>肉類（植物性蛋白）：<input type="number" id="deductPlant" step="0.1"></label>
+      <label>蔬菜：<input type="number" id="deductVeg" step="0.1"></label>
+      <label>蔬菜（水溶性纖維）：<input type="number" id="deductFiber" step="0.1"></label>
+      <label>水果：<input type="number" id="deductFruit" step="0.1"></label>
+      <button class="btn" onclick="deductAll()">扣除並紀錄</button>
     </div>
-    <button onclick="deductAll()">一次扣除並紀錄</button>
-</div>
 
-<h2>紀錄列表</h2>
-<div class="section">
-    <table>
-        <thead>
-            <tr><th>時間</th><th>餐別</th><th>類別</th><th>份量</th></tr>
-        </thead>
-        <tbody id="recordTable"></tbody>
-    </table>
-</div>
+    <h2>剩餘分量</h2>
+    <div class="section" id="remainingSection"></div>
+
+    <h2>紀錄列表</h2>
+    <div class="section">
+      <ul id="recordList"></ul>
+    </div>
+
+    <button class="btn" onclick="changeWallpaper()">更換桌布</button>
+  </div>
 
 <script>
-// 類別鍵與顯示名稱
-const categories = {
-    main: '主食',
-    meat: '肉類',
-    plant: '肉類（植物性蛋白）',
-    veg: '蔬菜',
-    fiber: '蔬菜（水溶性纖維）',
-    fruit: '水果'
-};
+  let totals = JSON.parse(localStorage.getItem("totals")) || {
+    main: 0, meat: 0, plant: 0, veg: 0, fiber: 0, fruit: 0
+  };
+  let remaining = JSON.parse(localStorage.getItem("remaining")) || { ...totals };
+  let records = JSON.parse(sessionStorage.getItem("records")) || [];
 
-// 六餐
-const meals = ["早餐","上午加餐","午餐","下午加餐","晚餐","宵夜"];
-
-// 數字格式化，避免 0.3000000004
-function round1(n){ return Math.round((+n || 0)*10)/10; }
-function fmt(n){ return round1(n).toFixed(1).replace(/\.0$/, '.0').replace('.0',''); }
-
-// -------- 設定與剩餘量 --------
-function saveSettings() {
-    const totals = {
-        main: round1(parseFloat(document.getElementById('totalMain').value) || 0),
-        meat: round1(parseFloat(document.getElementById('totalMeat').value) || 0),
-        plant: round1(parseFloat(document.getElementById('totalPlant').value) || 0),
-        veg: round1(parseFloat(document.getElementById('totalVeg').value) || 0),
-        fiber: round1(parseFloat(document.getElementById('totalFiber').value) || 0),
-        fruit: round1(parseFloat(document.getElementById('totalFruit').value) || 0)
+  function saveSettings() {
+    totals = {
+      main: parseFloat(document.getElementById("totalMain").value) || 0,
+      meat: parseFloat(document.getElementById("totalMeat").value) || 0,
+      plant: parseFloat(document.getElementById("totalPlant").value) || 0,
+      veg: parseFloat(document.getElementById("totalVeg").value) || 0,
+      fiber: parseFloat(document.getElementById("totalFiber").value) || 0,
+      fruit: parseFloat(document.getElementById("totalFruit").value) || 0
     };
-    localStorage.setItem('totals', JSON.stringify(totals));
-    localStorage.setItem('remaining', JSON.stringify(totals));
-    updateRemainingDisplay();
-}
+    remaining = { ...totals };
+    localStorage.setItem("totals", JSON.stringify(totals));
+    localStorage.setItem("remaining", JSON.stringify(remaining));
+    updateRemaining();
+  }
 
-function loadSettingsToInputs(){
-    const totals = JSON.parse(localStorage.getItem('totals')||'{}');
-    if(!totals) return;
-    if(totals.main!=null) document.getElementById('totalMain').value = totals.main;
-    if(totals.meat!=null) document.getElementById('totalMeat').value = totals.meat;
-    if(totals.plant!=null) document.getElementById('totalPlant').value = totals.plant;
-    if(totals.veg!=null) document.getElementById('totalVeg').value = totals.veg;
-    if(totals.fiber!=null) document.getElementById('totalFiber').value = totals.fiber;
-    if(totals.fruit!=null) document.getElementById('totalFruit').value = totals.fruit;
-}
+  function deductAll() {
+    let meal = document.getElementById("mealSelect").value;
+    let deduct = {
+      main: parseFloat(document.getElementById("deductMain").value) || 0,
+      meat: parseFloat(document.getElementById("deductMeat").value) || 0,
+      plant: parseFloat(document.getElementById("deductPlant").value) || 0,
+      veg: parseFloat(document.getElementById("deductVeg").value) || 0,
+      fiber: parseFloat(document.getElementById("deductFiber").value) || 0,
+      fruit: parseFloat(document.getElementById("deductFruit").value) || 0
+    };
 
-function updateRemainingDisplay() {
-    const def = {main:0, meat:0, plant:0, veg:0, fiber:0, fruit:0};
-    const remaining = Object.assign(def, JSON.parse(localStorage.getItem('remaining')||'{}'));
-    for (const key in def) {
-        const el = document.getElementById('rem' + key.charAt(0).toUpperCase() + key.slice(1));
-        if (el) {
-            el.textContent = categories[key] + '：' + fmt(remaining[key]);
-            el.classList.toggle('zero', (remaining[key]||0) < 0);
-        }
+    for (let key in deduct) {
+      remaining[key] = parseFloat((remaining[key] - deduct[key]).toFixed(1));
     }
-}
 
-function deduct(category, amount) {
-    const def = {main:0, meat:0, plant:0, veg:0, fiber:0, fruit:0};
-    const remaining = Object.assign(def, JSON.parse(localStorage.getItem('remaining')||'{}'));
-    if (remaining[category] != null) {
-        remaining[category] = round1((remaining[category]||0) - (amount||0));
-    }
-    localStorage.setItem('remaining', JSON.stringify(remaining));
-}
+    localStorage.setItem("remaining", JSON.stringify(remaining));
 
-// -------- 餐別選單 --------
-function populateMealSelect() {
-    const sel = document.getElementById('mealSelect');
-    sel.innerHTML = '';
-    meals.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m; opt.textContent = m; sel.appendChild(opt);
+    let now = new Date();
+    let time = now.toLocaleString("zh-TW");
+    records.push({ meal, deduct, time });
+    sessionStorage.setItem("records", JSON.stringify(records));
+
+    updateRemaining();
+    updateRecords();
+  }
+
+  function updateRemaining() {
+    let section = document.getElementById("remainingSection");
+    section.innerHTML = `
+      主食：<span class="${remaining.main<0?'negative':''}">${remaining.main}</span><br>
+      肉類：<span class="${remaining.meat<0?'negative':''}">${remaining.meat}</span><br>
+      肉類（植物性蛋白）：<span class="${remaining.plant<0?'negative':''}">${remaining.plant}</span><br>
+      蔬菜：<span class="${remaining.veg<0?'negative':''}">${remaining.veg}</span><br>
+      蔬菜（水溶性纖維）：<span class="${remaining.fiber<0?'negative':''}">${remaining.fiber}</span><br>
+      水果：<span class="${remaining.fruit<0?'negative':''}">${remaining.fruit}</span>
+    `;
+  }
+
+  function updateRecords() {
+    let list = document.getElementById("recordList");
+    list.innerHTML = "";
+    records.forEach(r => {
+      let li = document.createElement("li");
+      li.textContent = `${r.time} 【${r.meal}】 主食:${r.deduct.main}, 肉類:${r.deduct.meat}, 植物蛋白:${r.deduct.plant}, 蔬菜:${r.deduct.veg}, 水溶纖維:${r.deduct.fiber}, 水果:${r.deduct.fruit}`;
+      list.appendChild(li);
     });
-}
+  }
 
-// -------- 紀錄列表 --------
-function nowString(){
-    const d = new Date();
-    const Y = d.getFullYear();
-    const M = String(d.getMonth()+1).padStart(2,'0');
-    const D = String(d.getDate()).padStart(2,'0');
-    const h = String(d.getHours()).padStart(2,'0');
-    const m = String(d.getMinutes()).padStart(2,'0');
-    return `${Y}/${M}/${D} ${h}:${m}`;
-}
+  // 桌布隨機換
+  function changeWallpaper() {
+    const url = `https://source.unsplash.com/random/1080x1920/?wallpaper,landscape,4k,background&sig=${Math.random()}`;
+    document.body.style.backgroundImage = `url('${url}')`;
+  }
 
-function loadRecords(){
-    try{ return JSON.parse(sessionStorage.getItem('records')||'[]'); }catch(e){ return []; }
-}
-function saveRecords(arr){ sessionStorage.setItem('records', JSON.stringify(arr)); }
-
-function renderRecords(){
-    const tbody = document.getElementById('recordTable');
-    tbody.innerHTML = '';
-    const recs = loadRecords();
-    recs.forEach(r => addRecordRow(r));
-}
-
-function addRecordRow(r){
-    const tbody = document.getElementById('recordTable');
-    const row = tbody.insertRow();
-    row.insertCell(0).textContent = r.time;
-    row.insertCell(1).textContent = r.meal;
-    row.insertCell(2).textContent = categories[r.cat] || r.cat;
-    row.insertCell(3).textContent = fmt(r.amt);
-}
-
-function recordMeal(meal, cat, amt) {
-    const recs = loadRecords();
-    const r = { time: nowString(), meal, cat, amt: round1(amt) };
-    recs.push(r);
-    saveRecords(recs);
-    addRecordRow(r);
-}
-
-// -------- 一次扣除並紀錄 --------
-function deductAll() {
-    const meal = document.getElementById('mealSelect').value || meals[0];
-    const amounts = {
-        main: round1(parseFloat(document.getElementById('amtMain').value) || 0),
-        meat: round1(parseFloat(document.getElementById('amtMeat').value) || 0),
-        plant: round1(parseFloat(document.getElementById('amtPlant').value) || 0),
-        veg: round1(parseFloat(document.getElementById('amtVeg').value) || 0),
-        fiber: round1(parseFloat(document.getElementById('amtFiber').value) || 0),
-        fruit: round1(parseFloat(document.getElementById('amtFruit').value) || 0)
-    };
-    let changed = false;
-    for (const key in amounts) {
-        if (amounts[key] > 0) {
-            deduct(key, amounts[key]);
-            recordMeal(meal, key, amounts[key]);
-            const input = document.getElementById('amt' + key.charAt(0).toUpperCase() + key.slice(1));
-            if (input) input.value = '';
-            changed = true;
-        }
-    }
-    if (changed) updateRemainingDisplay();
-}
-
-// -------- 啟動 --------
-window.addEventListener('DOMContentLoaded', function() {
-    populateMealSelect();
-    loadSettingsToInputs();
-    updateRemainingDisplay();
-    renderRecords();
-});
+  window.onload = () => {
+    updateRemaining();
+    updateRecords();
+    changeWallpaper();
+  }
 </script>
-
 </body>
 </html>
