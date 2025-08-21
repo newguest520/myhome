@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>台灣小吃拉霸機 Plus</title>
+<meta name="description" content="點一下抽出今晚吃什麼！100 道台灣午晚餐常見菜單，附圖示與介紹，還有拉霸音效。" />
+<style>
+  :root{
+    --bg:#0e1021;
+    --card:#171a33;
+    --panel:#11142a;
+    --accent:#4ae3b5;
+    --accent2:#ffd166;
+    --accent3:#a78bfa;
+    --text:#e8ebff;
+    --muted:#9aa3b2;
+    --radius: 20px;
+    --shadow: 0 12px 36px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{ height:100%; margin:0; background:
+    radial-gradient(1200px 800px at 20% -10%, #2a3680 0%, transparent 60%),
+    radial-gradient(1200px 800px at 120% 110%, #4a1d7a 0%, transparent 60%),
+    var(--bg);
+    color:var(--text);
+    font-family: ui-rounded, system-ui, -apple-system, "SF Pro Display", "Segoe UI",
+      "Noto Sans TC","PingFang TC","Microsoft JhengHei", sans-serif;
+  }
+  .wrap{ min-height:100%; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
+  .app{ width:min(960px, 96vw); background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+        border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); box-shadow:var(--shadow);
+        padding:22px; position:relative; overflow:hidden; backdrop-filter: blur(6px); }
+  .header{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .logo{ width:14px; height:14px; border-radius:50%; background:var(--accent); box-shadow:0 0 16px var(--accent); }
+  h1{ font-size: clamp(22px, 3.6vw, 32px); margin:0; letter-spacing:.4px; }
+  .subtitle{ margin:4px 0 14px 26px; color:var(--muted); font-size: clamp(13px, 2.2vw, 15px); }
+  .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap:16px; }
+  @media (max-width: 820px){ .grid{ grid-template-columns:1fr; } }
+  .machine{ background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; }
+  .slot{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+  .reel{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+         border:1px solid rgba(255,255,255,.08); border-radius:14px; height:96px;
+         display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;
+         box-shadow: inset 0 10px 18px rgba(0,0,0,.25); }
+  .mask{ pointer-events:none; position:absolute; inset:0;
+         background: linear-gradient(180deg, rgba(14,16,33,1) 0%, rgba(14,16,33,0) 18%,
+                    rgba(14,16,33,0) 82%, rgba(14,16,33,1) 100%); border-radius:14px; }
+  .cell{ font-size: clamp(18px, 3.6vw, 24px); font-weight:800; white-space:nowrap; text-align:center;
+         transform: translateY(0); opacity:1; transition: transform .16s cubic-bezier(.2,.8,.2,1), opacity .16s linear; }
+  .result{ margin:14px 0 8px 0; font-size: clamp(24px, 5vw, 34px); font-weight:900; text-align:center; letter-spacing:.6px; }
+  .controls{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
+  .btn{ appearance:none; border:0; padding:14px 18px; border-radius:14px; font-size:16px; font-weight:900; letter-spacing:.5px;
+        cursor:pointer; box-shadow:var(--shadow); }
+  .btn:active{ transform: translateY(1px) scale(.995); }
+  .btn-primary{ background: radial-gradient(140% 200% at 100% 0%, var(--accent) 0%, #2dcfb2 50%, #20927f 100%); color:#0b1714; text-shadow:0 1px 0 rgba(255,255,255,.35); }
+  .btn-secondary{ background: radial-gradient(140% 200% at 0% 0%, var(--accent2) 0%, #f7b801 60%, #c49100 100%); color:#342400; text-shadow:0 1px 0 rgba(255,255,255,.35); }
+  .panel{ background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; }
+  .poster{ border-radius:16px; border:1px solid rgba(255,255,255,.06); background:
+           radial-gradient(400px 240px at 80% -10%, rgba(255,255,255,.16), transparent 60%),
+           linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+           display:flex; align-items:center; gap:14px; padding:14px; }
+  .poster .emoji{ width:78px; height:78px; flex:0 0 auto; border-radius:20px; display:grid; place-items:center;
+                  font-size:44px; box-shadow: inset 0 8px 20px rgba(0,0,0,.2), 0 10px 24px rgba(0,0,0,.25); }
+  .poster .meta{ flex:1 1 auto; }
+  .poster h3{ margin:2px 0 6px; font-size: clamp(18px, 3.2vw, 22px); }
+  .poster p{ margin:0; color:var(--muted); font-size: 14px; line-height:1.6; }
+  .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .tag{ font-size:12px; color:#0e1021; background:#cbe6ff; padding:6px 10px; border-radius:999px; font-weight:800; }
+  .celebrate{ pointer-events:none; position:absolute; inset:0; }
+  .confetti{ position:absolute; top:-10px; width:7px; height:12px; border-radius:3px; opacity:0;
+             transform: translateY(-40px) rotate(0deg); animation: fall 1.6s ease-out forwards; }
+  @keyframes fall{ 0%{opacity:0; transform: translateY(-40px) rotate(0deg);} 12%{opacity:1;} 100%{opacity:1; transform: translateY(110vh) rotate(540deg);} }
+  footer{ margin-top:16px; text-align:center; color:var(--muted); font-size:12px; }
+  .lever{ position:absolute; right:18px; top:18px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .lever .ball{ width:20px; height:20px; border-radius:50%; background:radial-gradient(100% 100% at 30% 30%, #fff, #ff6b6b);
+                 box-shadow:0 8px 18px rgba(255,107,107,.45); animation:pulse 2s infinite; }
+  .lever .stick{ width:6px; height:42px; border-radius:12px; background:linear-gradient(180deg, #eee, #999);
+                 box-shadow: inset 0 -6px 10px rgba(0,0,0,.2); }
+  @keyframes pulse{ 0%,100%{ transform:translateY(0) scale(1);} 50%{ transform:translateY(2px) scale(1.05);} }
+  .help{ margin-top:10px; color:var(--muted); font-size:12px; text-align:center; }
+  @supports(padding:max(0px)){
+    .wrap{ padding: max(32px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-left)) max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="app">
+    <div class="lever" aria-hidden="true">
+      <div class="ball"></div>
+      <div class="stick"></div>
+    </div>
+    <div class="header">
+      <div class="logo"></div>
+      <h1>台灣小吃拉霸機 Plus</h1>
+    </div>
+    <p class="subtitle">100 道台灣午/晚餐常見菜單。按「開抽」啟動三轉輪（菜名 / 類別 / 搭配），附圖文與音效，不喜歡就再抽一次！</p>
+
+    <div class="grid">
+      <section class="machine">
+        <div class="slot" role="group" aria-label="拉霸機三轉輪">
+          <div class="reel"><div class="cell" id="cell1">準備好了嗎？</div><div class="mask"></div></div>
+          <div class="reel"><div class="cell" id="cell2">按下開抽</div><div class="mask"></div></div>
+          <div class="reel"><div class="cell" id="cell3">今晚吃什麼</div><div class="mask"></div></div>
+        </div>
+        <div class="result" id="result">—</div>
+        <div class="controls">
+          <button class="btn btn-primary" id="spinBtn">🎰 開抽！</button>
+          <button class="btn btn-secondary" id="againBtn" disabled>再抽一次</button>
+        </div>
+        <div class="help">提示：支援鍵盤 Enter/空白鍵；長按可加入主畫面。</div>
+      </section>
+
+      <aside class="panel" id="detailPanel" aria-live="polite">
+        <div class="poster">
+          <div class="emoji" id="posterEmoji" style="background:linear-gradient(135deg,#4ae3b5,#1aa37f);">🍜</div>
+          <div class="meta">
+            <h3 id="posterTitle">還沒抽出菜色</h3>
+            <p id="posterDesc">按下「開抽！」讓拉霸開始旋轉，抽出今晚吃什麼。</p>
+            <div class="tags" id="posterTags"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="celebrate" id="celebrate" aria-hidden="true"></div>
+    <footer>© 2025 小吃隨機器 · 純前端、離線可用 · 音量請依環境調整</footer>
+  </div>
+</div>
+
+<script>
+(() => {
+  // 100 Taiwanese dishes: name, emoji (as poster), category, tags, short desc
+  const dishes = [
+    {n:"滷肉飯", e:"🍚", c:"飯類", t:["經典","平價","便當店"], d:"滷得入味的五花肉末淋在熱騰騰白飯上，一口滿足。"},
+    {n:"雞排", e:"🍗", c:"炸物", t:["夜市","酥脆"], d:"外酥內嫩，胡椒鹽或辣粉一灑就是台味宵夜。"},
+    {n:"蚵仔煎", e:"🦪", c:"煎物", t:["夜市","海味"], d:"蚵仔配上地瓜粉漿與蔬菜，淋醬甜鹹好滋味。"},
+    {n:"炸臭豆腐", e:"🧈", c:"炸物", t:["發酵香","夜市"], d:"外脆內嫩的臭豆腐，配上泡菜越吃越香。"},
+    {n:"鹽酥雞", e:"🍗", c:"炸物", t:["宵夜","下酒"], d:"九層塔加持的台式炸物拼盤，怎麼配都對味。"},
+    {n:"刈包", e:"🥪", c:"包類", t:["福州味","手拿食"], d:"白饅頭夾控肉、酸菜與花生粉，口感豐富。"},
+    {n:"肉圓", e:"🥟", c:"蒸炸", t:["彰化","Q彈"], d:"番薯粉外皮包入肉餡與筍丁，蒸或油泡皆誘人。"},
+    {n:"蚵仔麵線", e:"🍜", c:"湯麵", t:["熱騰騰","海味"], d:"大腸與蚵仔的鮮香，搭配羹湯口感滑順。"},
+    {n:"豆花", e:"🍮", c:"甜品", t:["傳統","消暑"], d:"綿密豆花搭配花生、粉圓或薑汁，甜而不膩。"},
+    {n:"花生捲冰淇淋", e:"🌯", c:"甜品", t:["東部","清爽"], d:"潤餅皮包花生糖粉、香菜與冰淇淋，衝擊味蕾。"},
+    {n:"胡椒餅", e:"🥧", c:"烤餅", t:["福州","胡椒香"], d:"炭爐烤出焦香外皮，裡面是多汁豬肉與蔥花。"},
+    {n:"棺材板", e:"🍞", c:"炸物", t:["台南","奶香"], d:"厚片麵包炸後挖空，塞入濃湯料，罪惡滿分。"},
+    {n:"甜不辣", e:"🍢", c:"關東煮", t:["湯頭","小點"], d:"魚漿製成的條狀點心，沾甜辣醬與沙茶最合拍。"},
+    {n:"米粉湯", e:"🥣", c:"湯品", t:["古早味","清爽"], d:"大骨湯頭加上細米粉與油蔥酥，暖胃首選。"},
+    {n:"蔥油餅", e:"🥞", c:"煎餅", t:["現桿現煎","酥香"], d:"層次分明的餅皮與蔥香四溢，簡單卻耐吃。"},
+    {n:"豬血糕", e:"🍡", c:"串類", t:["花生粉","香菜"], d:"蒸透的米血裹花生粉與香菜，台味代表。"},
+    {n:"烤香腸", e:"🌭", c:"串類", t:["夜市","蒜頭配"], d:"偏甜的台式香腸，配蒜頭一口一口超過癮。"},
+    {n:"筒仔米糕", e:"🍘", c:"飯類", t:["糯米","油蔥"], d:"蒸好的糯米配上肉燥、香菇與魚鬆，紮實飽足。"},
+    {n:"牛肉麵", e:"🍜", c:"湯麵", t:["紅燒","清燉"], d:"濃郁湯頭與大塊牛腩，台灣經典麵食之一。"},
+    {n:"車輪餅", e:"🧁", c:"甜品", t:["紅豆","奶油"], d:"外皮蓬鬆，內餡多變，下午茶的溫暖選擇。"},
+    {n:"地瓜球", e:"🟡", c:"炸物", t:["Q彈","甜香"], d:"外酥內空的球狀地瓜點心，越吃越涮嘴。"},
+    {n:"芋圓", e:"🟣", c:"甜品", t:["Q彈","清涼"], d:"芋頭與地瓜製成的Q彈小點，配仙草或剉冰。"},
+    {n:"魷魚羹", e:"🥣", c:"羹品", t:["酸甜","海味"], d:"魷魚與筍絲的羹湯，撒上香菜胡椒更提味。"},
+    {n:"四神湯", e:"🥣", c:"湯品", t:["藥膳","豬腸"], d:"薏仁、蓮子等煮成溫潤湯頭，搭配豬腸。"},
+    {n:"排骨飯", e:"🍱", c:"飯類", t:["便當店","酥炸"], d:"一塊大排骨配滷筍絲與酸菜，經典便當組合。"},
+    {n:"雞肉飯", e:"🍚", c:"飯類", t:["嘉義","油蔥香"], d:"淋上雞油與肉汁的米飯，香氣撲鼻。"},
+    {n:"火雞肉飯", e:"🍚", c:"飯類", t:["嘉義","低脂"], d:"火雞胸肉絲配滷汁油蔥，清爽不膩。"},
+    {n:"乾麵", e:"🍜", c:"拌麵", t:["油蔥","肉燥"], d:"簡單卻耐吃的油蔥拌麵，加一顆滷蛋完美。"},
+    {n:"陽春麵", e:"🍜", c:"湯麵", t:["古早味","清湯"], d:"清爽湯頭配細麵，撒上油蔥與韭菜。"},
+    {n:"炒米粉", e:"🍝", c:"炒類", t:["台式","油蔥"], d:"乾香入味的米粉，常配貢丸湯一起吃。"},
+    {n:"炒麵", e:"🍝", c:"炒類", t:["豆芽","肉絲"], d:"濃濃醬香與鍋氣，是早餐店人氣主食。"},
+    {n:"肉羹麵", e:"🥣", c:"羹麵", t:["勾芡","胡椒香"], d:"肉羹配上羹湯與麵條，暖胃又滿足。"},
+    {n:"貢丸湯", e:"🍲", c:"湯品", t:["清甜","竹筍"], d:"Q彈貢丸在清甜湯頭中彈牙，經典搭餐。"},
+    {n:"滷味拼盤", e:"🥘", c:"滷味", t:["鹹香","下酒"], d:"各式滷物切盤，淋上蒜蓉醬油更夠味。"},
+    {n:"雞蛋糕", e:"🧇", c:"甜品", t:["香甜","童年"], d:"外皮微酥，內裡鬆軟，香味撲鼻的小點心。"},
+    {n:"飯糰", e:"🍙", c:"早餐/主食", t:["油條","菜脯"], d:"糯米飯包入各種餡料，飽足又方便。"},
+    {n:"蛋餅", e:"🥞", c:"煎餅", t:["早餐","酥脆"], d:"薄餅包蛋香，可加起司培根等加料。"},
+    {n:"鐵板牛排(夜市)", e:"🥩", c:"鐵板", t:["黑胡椒","奶香"], d:"鐵板麵配牛排與黑胡椒醬，豪邁份量。"},
+    {n:"青蛙下蛋(粉圓飲)", e:"🥤", c:"飲品", t:["古早味","清涼"], d:"透明粉圓像青蛙卵，甜甜冰飲消暑。"},
+    {n:"木瓜牛奶", e:"🥤", c:"飲品", t:["濃郁","現打"], d:"新鮮木瓜現打，香濃順口。"},
+    {n:"冬瓜茶", e:"🥤", c:"飲品", t:["古早味","清爽"], d:"冬瓜熬煮的清甜茶飲，冰涼更好喝。"},
+    {n:"甘蔗汁", e:"🥤", c:"飲品", t:["現榨","清甜"], d:"現榨甘蔗的自然甜味，沁涼解渴。"},
+    {n:"愛玉冰", e:"🥣", c:"甜品", t:["山中果凍","檸檬"], d:"手洗愛玉加檸檬汁，酸甜清爽。"},
+    {n:"八寶冰", e:"🍧", c:"甜品", t:["剉冰","繽紛"], d:"多種配料堆疊在剉冰上，夏日最愛。"},
+    {n:"剉冰", e:"🍧", c:"甜品", t:["消暑","自選料"], d:"細碎冰配上煉乳與芋圓粉圓，冰涼暢快。"},
+    {n:"烤玉米", e:"🌽", c:"烤物", t:["醬香","耐嚼"], d:"邊烤邊刷醬的玉米，越嚼越香。"},
+    {n:"烤魷魚", e:"🦑", c:"烤物", t:["海味","彈牙"], d:"炭香逼出魷魚鮮甜，灑椒鹽更對味。"},
+    {n:"花枝丸", e:"🟠", c:"炸物", t:["海味","彈牙"], d:"炸至金黃的花枝丸，外酥內彈。"},
+    {n:"麻辣臭豆腐", e:"🍲", c:"麻辣", t:["暖胃","重口味"], d:"麻辣湯底浸泡臭豆腐，辣香四溢。"},
+    {n:"麻辣鴨血", e:"🍲", c:"麻辣", t:["滑嫩","湯滷"], d:"鴨血吸滿麻辣湯汁，暖身過癮。"},
+    {n:"鴨肉飯", e:"🍚", c:"飯類", t:["煙燻","油蔥"], d:"鴨肉片鋪滿白飯，香氣四溢。"},
+    {n:"鵝肉", e:"🍖", c:"冷盤/切盤", t:["煙燻","醬油膏"], d:"軟嫩多汁的鵝肉切盤，醬油膏與薑絲最搭。"},
+    {n:"肉燥麵", e:"🍜", c:"拌麵", t:["鹹香","油蔥"], d:"濃郁肉燥淋上麵條，簡單卻滿足。"},
+    {n:"台式炸醬麵", e:"🍜", c:"拌麵", t:["黃瓜絲","豆乾肉末"], d:"鹹甜炸醬與麵條拌勻，一口接一口。"},
+    {n:"鍋貼", e:"🥟", c:"煎餃", t:["脆底","多汁"], d:"一面酥脆一面軟嫩，沾醬更夠味。"},
+    {n:"水餃", e:"🥟", c:"水餃", t:["家常","飽足"], d:"高麗菜或韭菜餡，皮Q餡多汁。"},
+    {n:"蔥抓餅", e:"🥞", c:"煎餅", t:["層次","蔥香"], d:"手抓出層次的餅皮，酥香耐嚼。"},
+    {n:"小火鍋", e:"🍲", c:"火鍋", t:["個人鍋","飽足"], d:"湯底多變，肉菜海鮮一次滿足。"},
+    {n:"鍋燒意麵", e:"🍜", c:"湯麵", t:["台南","暖胃"], d:"意麵與海鮮蔬菜在湯裡滾煮，香氣十足。"},
+    {n:"虱目魚粥", e:"🥣", c:"粥品", t:["台南","清甜"], d:"虱目魚與米粒熬煮成粥，柔和暖胃。"},
+    {n:"虱目魚肚湯", e:"🥣", c:"湯品", t:["台南","鮮甜"], d:"鮮嫩魚肚在清甜湯頭中，簡單卻出色。"},
+    {n:"油飯", e:"🍚", c:"飯類", t:["香菇","魷魚"], d:"糯米拌入香菇魷魚與蝦米，香氣濃郁。"},
+    {n:"肉粽(南部)", e:"🌯", c:"米食", t:["糯米","花生"], d:"生米下去煮的軟黏口感，配甜辣醬。"},
+    {n:"肉粽(北部)", e:"🌯", c:"米食", t:["粒粒分明","炒米"], d:"先炒後包再蒸，米粒分明有嚼勁。"},
+    {n:"碗粿", e:"🍮", c:"米食", t:["台南","蒸食"], d:"米漿蒸製的滑嫩點心，配蒜蓉醬油膏。"},
+    {n:"蚵嗲", e:"🥟", c:"炸物", t:["彰化","海味"], d:"高麗菜與蚵仔裹粉油炸，外脆內鮮。"},
+    {n:"旗魚黑輪", e:"🧄", c:"炸物", t:["高雄","魚漿香"], d:"魚漿裹蛋黃或蔥段，炸到金黃。"},
+    {n:"米血湯", e:"🥣", c:"湯品", t:["胡椒","油蔥"], d:"米血切塊入湯，灑胡椒提味。"},
+    {n:"排骨酥湯", e:"🍲", c:"湯品", t:["藥膳","酥香"], d:"炸排骨與蘿蔔熬煮，湯頭甘甜。"},
+    {n:"鹹水雞", e:"🍗", c:"冷盤", t:["清爽","蒜香"], d:"去骨雞肉拌小黃瓜與蒜香，口感清新。"},
+    {n:"鹹粥", e:"🥣", c:"粥品", t:["古早味","暖胃"], d:"米粥配油條、魚鬆或肉鬆，樸實順口。"},
+    {n:"燒臘便當", e:"🍱", c:"飯類", t:["港式","雙拼"], d:"叉燒、燒鴨或油雞搭配白飯與配菜。"},
+    {n:"大腸包小腸", e:"🌭", c:"串類", t:["花生粉","蒜頭"], d:"糯米腸夾香腸，再加酸菜蒜蓉。"},
+    {n:"鹽水意麵", e:"🍜", c:"湯麵", t:["台南","鹹香"], d:"細扁意麵在清湯中，撒油蔥與芹菜。"},
+    {n:"擔仔麵", e:"🍜", c:"湯麵", t:["台南","肉燥"], d:"小碗卻風味足，肉燥、蝦子與蒜蓉提味。"},
+    {n:"章魚燒(台式)", e:"🧆", c:"點心", t:["夜市","柴魚"], d:"台式口味調整，外脆內軟的球形點心。"},
+    {n:"炸雞塊", e:"🍗", c:"炸物", t:["兒時回憶","胡椒粉"], d:"小塊雞肉裹粉炸，撒上胡椒最對味。"},
+    {n:"炒滷味", e:"🍳", c:"熱炒", t:["蒜頭","九層塔"], d:"滷味再炒入蒜香與辣椒，香氣更上一層。"},
+    {n:"三杯雞", e:"🍗", c:"熱炒", t:["九層塔","麻油"], d:"醬油、米酒、麻油收汁，香濃下飯。"},
+    {n:"宮保雞丁", e:"🍗", c:"熱炒", t:["花生","辣椒"], d:"辣中帶甜的經典下飯料理。"},
+    {n:"客家小炒", e:"🥓", c:"熱炒", t:["魷魚","豆乾"], d:"魷魚、五花肉與豆乾拌炒，鹹香下飯。"},
+    {n:"滷雞腿便當", e:"🍗", c:"便當", t:["招牌","經濟實惠"], d:"滷得入味的雞腿配兩三樣配菜，飽足。"},
+    {n:"排骨酥麵", e:"🍜", c:"湯麵", t:["藥膳","酥香"], d:"排骨酥與麵條在甘甜湯頭裡，暖心。"},
+    {n:"蚵仔湯", e:"🥣", c:"湯品", t:["海味","薑絲"], d:"鮮蚵加薑絲與米酒提鮮，鮮味滿滿。"},
+    {n:"米苔目", e:"🍜", c:"湯麵/拌麵", t:["Q彈","古早味"], d:"粗短Q彈的米製麵條，乾湯皆宜。"},
+    {n:"麵線糊", e:"🍜", c:"羹麵", t:["南部","勾芡"], d:"較濃稠的麵線羹，滑順暖胃。"},
+    {n:"阿給", e:"🧆", c:"油炸/滷", t:["淡水","粉絲"], d:"油豆腐塞粉絲再滷，淋上特製醬。"},
+    {n:"鐵蛋", e:"🥚", c:"滷味", t:["淡水","耐嚼"], d:"經多次滷製風乾的蛋，口感紮實。"},
+    {n:"砂鍋魚頭", e:"🍲", c:"砂鍋", t:["嘉義","濃郁"], d:"大魚頭與蔬菜豆皮熬成奶白湯。"},
+    {n:"羊肉爐", e:"🍲", c:"火鍋", t:["冬季","藥膳"], d:"溫補湯底燉煮羊肉，越煮越香。"},
+    {n:"薑母鴨", e:"🍲", c:"火鍋", t:["麻油","老薑"], d:"老薑麻油與米酒熬煮鴨肉，驅寒暖胃。"},
+    {n:"鹹酥蝦", e:"🦐", c:"炸物", t:["海味","下酒"], d:"連殼酥炸的小蝦，鹹香酥脆。"},
+    {n:"鹹豬肉", e:"🥓", c:"客家", t:["下酒","蒜苗"], d:"鹽醃豬五花煎烤後切片，越嚼越香。"},
+    {n:"炒滷大腸", e:"🥘", c:"熱炒", t:["蒜香","辣椒"], d:"處理乾淨的大腸與蔬菜爆炒，香辣下飯。"},
+    {n:"鱔魚意麵", e:"🍝", c:"炒麵", t:["台南","嗆鍋"], d:"鱔魚快炒嗆鍋，加上意麵獨特口感。"},
+    {n:"蚵仔酥", e:"🦪", c:"炸物", t:["海味","酥脆"], d:"鮮蚵裹粉酥炸，外脆內鮮。"},
+    {n:"滷大腸", e:"🥘", c:"滷味", t:["胡椒","蒜香"], d:"滷到入味又不失Q彈，切盤佐醬。"},
+    {n:"豬腳飯", e:"🍚", c:"飯類", t:["膠質","下飯"], d:"Q彈膠質的豬腳配滷汁，滿足感十足。"},
+    {n:"控肉飯", e:"🍚", c:"飯類", t:["肥瘦相間","台南"], d:"大塊控肉鋪在飯上，入口即化。"},
+    {n:"鹹蛋苦瓜", e:"🥒", c:"熱炒", t:["鹹香","家常"], d:"鹹蛋與苦瓜拌炒，鹹香回甘。"},
+    {n:"炒高麗菜", e:"🥬", c:"熱炒", t:["蒜香","清甜"], d:"大火快炒保留脆度，清甜下飯。"},
+    {n:"蒜泥白肉", e:"🥓", c:"冷盤", t:["蒜香","芝麻醬"], d:"川燙五花肉淋蒜泥與芝麻醬，清爽不膩。"},
+    {n:"蚵仔粥", e:"🥣", c:"粥品", t:["海味","薑絲"], d:"鮮蚵與米粒同煮，鮮甜滑口。"},
+    {n:"海產粥", e:"🥣", c:"粥品", t:["澎湖","鮮甜"], d:"綜合海鮮熬出的米粥，料多味美。"},
+    {n:"肉燥飯(南部)", e:"🍚", c:"飯類", t:["偏甜","黏口"], d:"南部口味偏甜，醬汁黏口香濃。"},
+    {n:"肉燥飯(北部)", e:"🍚", c:"飯類", t:["偏瘦","油蔥"], d:"偏瘦肉燥與油蔥搭配，香而不膩。"},
+    {n:"章魚米粉湯", e:"🥣", c:"湯品", t:["海味","清甜"], d:"章魚腳與米粉同煮，清甜耐喝。"},
+    {n:"燒餅油條", e:"🥐", c:"早餐/點心", t:["酥脆","沾豆漿"], d:"酥脆燒餅與油條，經典組合。"},
+    {n:"胡椒蝦", e:"🦐", c:"砂鍋/烤", t:["胡椒香","下酒"], d:"砂鍋乾焗胡椒蝦，香辣過癮。"},
+    {n:"台式泡菜", e:"🥬", c:"小菜", t:["解膩","微酸辣"], d:"脆口微酸甜，搭炸物超合拍。"},
+    {n:"魯筍絲", e:"🥗", c:"小菜", t:["便當配菜","甘甜"], d:"常見便當配菜，甘甜不膩。"},
+    {n:"滷海帶", e:"🥗", c:"小菜", t:["便當配菜","海味"], d:"海帶吸飽滷汁，口感Q彈。"},
+    {n:"滷豆干", e:"🧈", c:"小菜", t:["便當配菜","入味"], d:"豆干滷到入味，是萬用配角。"},
+    {n:"香菇雞湯", e:"🍲", c:"湯品", t:["補氣","家常"], d:"香菇與雞肉熬出的清甜湯頭。"},
+    {n:"蛤蜊湯", e:"🥣", c:"湯品", t:["海味","薑絲"], d:"蛤蜊鮮味直球對決，簡單最好喝。"},
+    {n:"赤肉羹", e:"🥣", c:"羹品", t:["胡椒","甜辣"], d:"赤肉塊與羹湯，灑白胡椒更對味。"},
+    {n:"甜辣米血", e:"🍢", c:"小吃", t:["花生粉","香菜"], d:"米血切塊串起，沾甜辣醬很唰嘴。"},
+    {n:"烤地瓜", e:"🍠", c:"烤物", t:["冬季","甜蜜"], d:"慢烤逼出地瓜蜜香，暖胃。"},
+    {n:"鹽酥杏鮑菇", e:"🍄", c:"炸物", t:["多汁","椒鹽"], d:"外酥內多汁，素食者也愛。"},
+    {n:"蔥爆牛肉", e:"🥩", c:"熱炒", t:["大火","下飯"], d:"蔥段與牛肉快炒，香氣四溢。"},
+    {n:"鳳梨蝦球", e:"🍤", c:"熱炒", t:["美乃滋","酸甜"], d:"酥炸蝦球拌鳳梨與美乃滋，酸甜開胃。"},
+    {n:"螞蟻上樹", e:"🍝", c:"熱炒", t:["冬粉","家常"], d:"肉末與冬粉拌炒入味。"},
+    {n:"炒羊肉", e:"🥩", c:"熱炒", t:["沙茶","蒜香"], d:"沙茶與蒜香拌炒，羊肉嫩口。"},
+    {n:"黑胡椒鐵板麵", e:"🍝", c:"鐵板", t:["夜市","濃香"], d:"黑胡椒醬與奶油交織的重口味麵。"},
+    {n:"香腸攤熱狗", e:"🌭", c:"點心", t:["童年","番茄醬"], d:"台式熱狗裹粉油炸，外脆內軟。"},
+    {n:"蒸餃", e:"🥟", c:"蒸點", t:["多汁","醋薑"], d:"皮薄多汁，沾醋薑更提味。"},
+    {n:"蔥油雞", e:"🍗", c:"冷盤", t:["清爽","蔥香"], d:"白斬雞淋蔥油，清爽開胃。"},
+    {n:"涼麵", e:"🥗", c:"拌麵", t:["夏日","芝麻醬"], d:"冰鎮麵條拌芝麻醬與小黃瓜，消暑。"},
+    {n:"羊肉燴飯", e:"🍛", c:"燴飯", t:["沙茶","勾芡"], d:"沙茶羊肉與蔬菜勾芡淋飯，濃郁。"},
+    {n:"咖哩飯(台式)", e:"🍛", c:"燴飯", t:["馬鈴薯","紅蘿蔔"], d:"偏甜口味的家常咖哩，配白飯剛好。"},
+    {n:"魯排骨", e:"🍖", c:"滷味", t:["入味","便當店"], d:"滷到軟透的排骨，鹹香下飯。"},
+    {n:"炸排骨", e:"🍖", c:"炸物", t:["酥脆","胡椒"], d:"外皮酥脆的炸排骨，灑胡椒最尬意。"},
+    {n:"蔥爆豬肉", e:"🥩", c:"熱炒", t:["大火","家常"], d:"蔥段爆香拌炒豬肉，白飯殺手。"},
+    {n:"海鮮炒飯", e:"🍚", c:"炒飯", t:["鍋氣","粒粒分明"], d:"鍋氣十足，海味滿點。"},
+    {n:"蝦仁炒飯", e:"🍤", c:"炒飯", t:["經典","鍋氣"], d:"蝦仁與蛋香、蔥花的完美組合。"},
+    {n:"蛋包飯(台式)", e:"🍳", c:"飯類", t:["番茄醬","鬆軟"], d:"鬆軟蛋皮包著炒飯，淋上番茄醬。"},
+    {n:"蔥爆大腸", e:"🥘", c:"熱炒", t:["九層塔","蒜香"], d:"大腸與蔥段快炒，香辣過癮。"},
+    {n:"雞絲麵", e:"🍜", c:"湯麵", t:["家常","快速"], d:"雞絲搭配細麵與清湯，簡單好吃。"},
+    {n:"滷筍干", e:"🥗", c:"小菜", t:["便當配菜","甘甜"], d:"帶有纖維口感的筍干滷到入味。"},
+    {n:"台式熱炒牛柳", e:"🥩", c:"熱炒", t:["黑胡椒","洋蔥"], d:"黑胡椒嗆香與牛柳交織。"},
+    {n:"沙茶牛肉", e:"🥩", c:"熱炒", t:["沙茶","大火"], d:"經典熱炒，香氣逼人。"},
+    {n:"三色蛋", e:"🥚", c:"冷盤", t:["皮蛋","鹹蛋"], d:"蒸蛋加入皮蛋與鹹蛋，層次豐富。"},
+    {n:"炒青菜(地瓜葉)", e:"🥬", c:"熱炒", t:["蒜香","清甜"], d:"地瓜葉清炒保留滑嫩。"},
+    {n:"炒青菜(空心菜)", e:"🥬", c:"熱炒", t:["蒜香","脆口"], d:"空心菜清炒爽脆下飯。"},
+  ];
+
+  // Categories and pairings for reels 2 & 3
+  const categories = [
+    {icon:"🍚", name:"飯類"}, {icon:"🍜", name:"麵類"}, {icon:"🍲", name:"湯/鍋"},
+    {icon:"🍢", name:"串/關東煮"}, {icon:"🍖", name:"滷/切盤"}, {icon:"🍤", name:"海鮮"},
+    {icon:"🍝", name:"炒類"}, {icon:"🥟", name:"餃/包點"}, {icon:"🍧", name:"甜品"},
+    {icon:"🥤", name:"飲品"}, {icon:"🍗", name:"炸物"}, {icon:"🥗", name:"小菜"},
+    {icon:"🥞", name:"煎餅"}, {icon:"🌯", name:"米食"}, {icon:"🧆", name:"點心"},
+  ];
+  const pairings = [
+    {icon:"🥤", name:"配冬瓜茶"}, {icon:"🥤", name:"配紅茶牛奶"}, {icon:"🍺", name:"配啤酒"},
+    {icon:"🥣", name:"加貢丸湯"}, {icon:"🥣", name:"加蛤蜊湯"}, {icon:"🥗", name:"來份台式泡菜"},
+    {icon:"🍢", name:"加米血糕"}, {icon:"🍟", name:"加地瓜薯條"}, {icon:"🍡", name:"來串米血"},
+    {icon:"🍧", name:"飯後剉冰"}, {icon:"🍮", name:"飯後豆花"}, {icon:"🍵", name:"熱茶解膩"},
+    {icon:"🧋", name:"配珍奶"}, {icon:"🥛", name:"配木瓜牛奶"}, {icon:"🧄", name:"蒜頭多一點"},
+  ];
+
+  const cells = [document.getElementById('cell1'), document.getElementById('cell2'), document.getElementById('cell3')];
+  const resultEl = document.getElementById('result');
+  const spinBtn = document.getElementById('spinBtn');
+  const againBtn = document.getElementById('againBtn');
+  const confettiLayer = document.getElementById('celebrate');
+
+  const posterEmoji = document.getElementById('posterEmoji');
+  const posterTitle = document.getElementById('posterTitle');
+  const posterDesc = document.getElementById('posterDesc');
+  const posterTags = document.getElementById('posterTags');
+
+  let spinning = false;
+  let lastPick = null;
+
+  function rand(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function randomDish(exclude){
+    if (dishes.length <= 1) return dishes[0];
+    let pick;
+    do{ pick = rand(dishes); } while (exclude && pick.n === exclude.n);
+    return pick;
+  }
+
+  // Sound effects via WebAudio (no外部檔)
+  let audioCtx;
+  function ensureAudio(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  function playSpin(){
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(200, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.6);
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.7);
+  }
+  function playTick(delay){
+    ensureAudio();
+    const t = audioCtx.currentTime + (delay || 0);
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(880, t);
+    o.frequency.exponentialRampToValueAtTime(440, t + 0.09);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.18, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(t); o.stop(t + 0.14);
+  }
+  function playWin(){
+    ensureAudio();
+    const now = audioCtx.currentTime;
+    const notes = [880, 988, 1175, 1319]; // 小勝利音效
+    notes.forEach((f,i)=>{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f, now + i*0.12);
+      g.gain.setValueAtTime(0.0001, now + i*0.12);
+      g.gain.exponentialRampToValueAtTime(0.2, now + i*0.12 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i*0.12 + 0.18);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(now + i*0.12); o.stop(now + i*0.12 + 0.2);
+    });
+  }
+
+  function flash(cell){
+    cell.style.opacity = '0';
+    cell.style.transform = 'translateY(8px)';
+    setTimeout(() => {
+      cell.style.opacity = '1';
+      cell.style.transform = 'translateY(0)';
+    }, 0);
+  }
+
+  function setPoster(d){
+    posterEmoji.textContent = d.e;
+    // dynamic gradient per category
+    const col = {
+      "飯類":["#ffd166","#fca311"], "麵類":["#4ae3b5","#1aa37f"], "湯/鍋":["#60a5fa","#2563eb"],
+      "炸物":["#fda4af","#fb7185"], "甜品":["#a78bfa","#7c3aed"], "羹品":["#93c5fd","#3b82f6"],
+      "拌麵":["#4ade80","#16a34a"], "熱炒":["#fbbf24","#ef4444"], "小菜":["#cbd5e1","#64748b"],
+      "點心":["#f9a8d4","#db2777"], "餃/包點":["#fcd34d","#f59e0b"], "湯麵":["#86efac","#22c55e"],
+      "關東煮":["#67e8f9","#06b6d4"], "米食":["#fde68a","#f59e0b"], "飲品":["#99f6e4","#06b6d4"],
+      "烤物":["#fca5a5","#ef4444"], "鐵板":["#e9d5ff","#7c3aed"], "便當":["#fef08a","#d97706"],
+      "砂鍋":["#fecaca","#ef4444"], "客家":["#fecdd3","#fb7185"]
+    }[d.c] || ["#4ae3b5","#1aa37f"];
+    posterEmoji.style.background = `linear-gradient(135deg, ${col[0]}, ${col[1]})`;
+    posterTitle.textContent = d.n;
+    posterDesc.textContent = d.d;
+    posterTags.innerHTML = "";
+    const tags = [d.c].concat(d.t || []);
+    tags.slice(0,4).forEach(tag=>{
+      const el = document.createElement('span');
+      el.className = 'tag';
+      el.textContent = tag;
+      posterTags.appendChild(el);
+    });
+  }
+
+  function celebrate(){
+    confettiLayer.innerHTML = '';
+    const colors = ['#4ae3b5', '#ffd166', '#a78bfa', '#ff6b6b', '#60a5fa'];
+    const count = 90;
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = (Math.random() * .6) + 's';
+      piece.style.transform = `translateY(-40px) rotate(${Math.random()*120}deg)`;
+      confettiLayer.appendChild(piece);
+    }
+    setTimeout(() => confettiLayer.innerHTML = '', 2600);
+  }
+
+  function spinOnce(){
+    if (spinning) return;
+    spinning = true;
+    spinBtn.disabled = true; againBtn.disabled = true;
+
+    const finalDish = randomDish(lastPick);
+    const finalCat = rand(categories);
+    const finalPair = rand(pairings);
+    playSpin();
+
+    const durations = [720, 930, 1150];
+    const timers = [];
+    // Start all reels
+    // Reel 1: dish names
+    let t1 = 0;
+    const tick1 = () => {
+      if (!spinning) return;
+      const s = rand(dishes).n;
+      cells[0].textContent = s;
+      flash(cells[0]);
+      timers[0] = setTimeout(tick1, 60);
+    };
+    tick1();
+    // Reel 2: category icons
+    let t2 = 0;
+    const tick2 = () => {
+      if (!spinning) return;
+      const s = rand(categories); cells[1].textContent = s.icon + " " + s.name;
+      flash(cells[1]);
+      timers[1] = setTimeout(tick2, 60);
+    };
+    tick2();
+    // Reel 3: pairing icons
+    let t3 = 0;
+    const tick3 = () => {
+      if (!spinning) return;
+      const s = rand(pairings); cells[2].textContent = s.icon + " " + s.name;
+      flash(cells[2]);
+      timers[2] = setTimeout(tick3, 60);
+    };
+    tick3();
+
+    // Stop sequence with ticks
+    durations.forEach((dur, idx) => {
+      setTimeout(() => { playTick(idx*0.05); }, dur - 120);
+    });
+
+    // Stop to final values
+    setTimeout(()=>{ clearTimeout(timers[0]); cells[0].textContent = finalDish.n; flash(cells[0]); }, durations[0]);
+    setTimeout(()=>{ clearTimeout(timers[1]); cells[1].textContent = finalDish.e + " " + finalDish.c; flash(cells[1]); }, durations[1]);
+    setTimeout(()=>{
+      clearTimeout(timers[2]);
+      cells[2].textContent = finalPair.icon + " " + finalPair.name;
+      flash(cells[2]);
+      resultEl.textContent = "今晚就吃：「" + finalDish.n + "」";
+      setPoster(finalDish);
+      lastPick = finalDish;
+      spinning = false;
+      spinBtn.disabled = false; againBtn.disabled = false;
+      celebrate(); playWin();
+    }, durations[2]);
+  }
+
+  spinBtn.addEventListener('click', spinOnce);
+  againBtn.addEventListener('click', spinOnce);
+  window.addEventListener('keydown', (e)=>{
+    if ((e.key === 'Enter' || e.key === ' ') && !spinning){
+      e.preventDefault(); spinOnce();
+    }
+  }, {passive:false});
+})();
+</script>
+</body>
+</html>
