@@ -14,9 +14,9 @@
     .section { background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
     input, select, button { padding: 5px; margin: 3px 0; font-size: 16px; }
     button { background: #4CAF50; color: white; border: none; border-radius: 5px; padding: 6px 10px; }
-    .remaining { display: grid; grid-template-columns: repeat(1, 1fr); gap: 10px; }
-    .rem-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; align-items: center; }
-    .zero { background: #ffcccc; }
+    .remaining { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .rem-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; }
+    .zero { background: #ffefef; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
 </style>
@@ -27,7 +27,9 @@
 <div class="section" id="setup">
     主食：<input type="number" id="totalMain" placeholder="份數" step="0.1">
     肉類：<input type="number" id="totalMeat" placeholder="份數" step="0.1">
+    肉類（植物性蛋白）：<input type="number" id="totalPlant" placeholder="份數" step="0.1">
     蔬菜：<input type="number" id="totalVeg" placeholder="份數" step="0.1">
+    蔬菜（水溶性纖維）：<input type="number" id="totalFiber" placeholder="份數" step="0.1">
     水果：<input type="number" id="totalFruit" placeholder="份數" step="0.1">
     <button onclick="saveSettings()">儲存設定</button>
 </div>
@@ -45,8 +47,16 @@
             <input type="number" id="amtMeat" placeholder="份量" step="0.1">
         </div>
         <div class="rem-row">
+            <div id="remPlant">肉類（植物性蛋白）：0</div>
+            <input type="number" id="amtPlant" placeholder="份量" step="0.1">
+        </div>
+        <div class="rem-row">
             <div id="remVeg">蔬菜：0</div>
             <input type="number" id="amtVeg" placeholder="份量" step="0.1">
+        </div>
+        <div class="rem-row">
+            <div id="remFiber">蔬菜（水溶性纖維）：0</div>
+            <input type="number" id="amtFiber" placeholder="份量" step="0.1">
         </div>
         <div class="rem-row">
             <div id="remFruit">水果：0</div>
@@ -60,86 +70,158 @@
 <div class="section">
     <table>
         <thead>
-            <tr><th>餐別</th><th>類別</th><th>份量</th></tr>
+            <tr><th>時間</th><th>餐別</th><th>類別</th><th>份量</th></tr>
         </thead>
         <tbody id="recordTable"></tbody>
     </table>
 </div>
 
 <script>
-const categories = { main: '主食', meat: '肉類', veg: '蔬菜', fruit: '水果' };
+// 類別鍵與顯示名稱
+const categories = {
+    main: '主食',
+    meat: '肉類',
+    plant: '肉類（植物性蛋白）',
+    veg: '蔬菜',
+    fiber: '蔬菜（水溶性纖維）',
+    fruit: '水果'
+};
+
+// 六餐
 const meals = ["早餐","上午加餐","午餐","下午加餐","晚餐","宵夜"];
 
-function populateMealSelect() {
-    let sel = document.getElementById('mealSelect');
-    sel.innerHTML = "";
-    meals.forEach(m => {
-        let opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
-        sel.appendChild(opt);
-    });
-}
+// 數字格式化，避免 0.3000000004
+function round1(n){ return Math.round((+n || 0)*10)/10; }
+function fmt(n){ return round1(n).toFixed(1).replace(/\.0$/, '.0').replace('.0',''); }
 
+// -------- 設定與剩餘量 --------
 function saveSettings() {
-    let totals = {
-        main: parseFloat(document.getElementById('totalMain').value) || 0,
-        meat: parseFloat(document.getElementById('totalMeat').value) || 0,
-        veg: parseFloat(document.getElementById('totalVeg').value) || 0,
-        fruit: parseFloat(document.getElementById('totalFruit').value) || 0
+    const totals = {
+        main: round1(parseFloat(document.getElementById('totalMain').value) || 0),
+        meat: round1(parseFloat(document.getElementById('totalMeat').value) || 0),
+        plant: round1(parseFloat(document.getElementById('totalPlant').value) || 0),
+        veg: round1(parseFloat(document.getElementById('totalVeg').value) || 0),
+        fiber: round1(parseFloat(document.getElementById('totalFiber').value) || 0),
+        fruit: round1(parseFloat(document.getElementById('totalFruit').value) || 0)
     };
     localStorage.setItem('totals', JSON.stringify(totals));
     localStorage.setItem('remaining', JSON.stringify(totals));
     updateRemainingDisplay();
-    alert("設定已儲存，您可以將此網頁加到主畫面方便快速開啟！");
+}
+
+function loadSettingsToInputs(){
+    const totals = JSON.parse(localStorage.getItem('totals')||'{}');
+    if(!totals) return;
+    if(totals.main!=null) document.getElementById('totalMain').value = totals.main;
+    if(totals.meat!=null) document.getElementById('totalMeat').value = totals.meat;
+    if(totals.plant!=null) document.getElementById('totalPlant').value = totals.plant;
+    if(totals.veg!=null) document.getElementById('totalVeg').value = totals.veg;
+    if(totals.fiber!=null) document.getElementById('totalFiber').value = totals.fiber;
+    if(totals.fruit!=null) document.getElementById('totalFruit').value = totals.fruit;
 }
 
 function updateRemainingDisplay() {
-    let remaining = JSON.parse(localStorage.getItem('remaining')) || {main:0, meat:0, veg:0, fruit:0};
-    for (let key in remaining) {
-        let el = document.getElementById('rem' + key.charAt(0).toUpperCase() + key.slice(1));
-        el.textContent = categories[key] + '：' + remaining[key];
-        el.classList.toggle('zero', remaining[key] <= 0);
+    const def = {main:0, meat:0, plant:0, veg:0, fiber:0, fruit:0};
+    const remaining = Object.assign(def, JSON.parse(localStorage.getItem('remaining')||'{}'));
+    for (const key in def) {
+        const el = document.getElementById('rem' + key.charAt(0).toUpperCase() + key.slice(1));
+        if (el) {
+            el.textContent = categories[key] + '：' + fmt(remaining[key]);
+            el.classList.toggle('zero', (remaining[key]||0) <= 0);
+        }
     }
 }
 
 function deduct(category, amount) {
-    let remaining = JSON.parse(localStorage.getItem('remaining')) || {};
-    if (remaining[category] !== undefined) {
-        remaining[category] = Math.max(0, remaining[category] - amount);
+    const def = {main:0, meat:0, plant:0, veg:0, fiber:0, fruit:0};
+    const remaining = Object.assign(def, JSON.parse(localStorage.getItem('remaining')||'{}'));
+    if (remaining[category] != null) {
+        // 改為允許負數，不再強制 0 下限
+        remaining[category] = round1((remaining[category]||0) - (amount||0));
     }
     localStorage.setItem('remaining', JSON.stringify(remaining));
 }
 
-function recordMeal(meal, cat, amt) {
-    let table = document.getElementById('recordTable');
-    let row = table.insertRow();
-    row.insertCell(0).textContent = meal;
-    row.insertCell(1).textContent = categories[cat];
-    row.insertCell(2).textContent = amt;
+// -------- 餐別選單 --------
+function populateMealSelect() {
+    const sel = document.getElementById('mealSelect');
+    sel.innerHTML = '';
+    meals.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m; sel.appendChild(opt);
+    });
 }
 
+// -------- 紀錄列表（含時間），存在 sessionStorage，頁面重啟（關閉）前不會消失 --------
+function nowString(){
+    const d = new Date();
+    const Y = d.getFullYear();
+    const M = String(d.getMonth()+1).padStart(2,'0');
+    const D = String(d.getDate()).padStart(2,'0');
+    const h = String(d.getHours()).padStart(2,'0');
+    const m = String(d.getMinutes()).padStart(2,'0');
+    return `${Y}/${M}/${D} ${h}:${m}`;
+}
+
+function loadRecords(){
+    try{ return JSON.parse(sessionStorage.getItem('records')||'[]'); }catch(e){ return []; }
+}
+function saveRecords(arr){ sessionStorage.setItem('records', JSON.stringify(arr)); }
+
+function renderRecords(){
+    const tbody = document.getElementById('recordTable');
+    tbody.innerHTML = '';
+    const recs = loadRecords();
+    recs.forEach(r => addRecordRow(r));
+}
+
+function addRecordRow(r){
+    const tbody = document.getElementById('recordTable');
+    const row = tbody.insertRow();
+    row.insertCell(0).textContent = r.time;
+    row.insertCell(1).textContent = r.meal;
+    row.insertCell(2).textContent = categories[r.cat] || r.cat;
+    row.insertCell(3).textContent = fmt(r.amt);
+}
+
+function recordMeal(meal, cat, amt) {
+    const recs = loadRecords();
+    const r = { time: nowString(), meal, cat, amt: round1(amt) };
+    recs.push(r);
+    saveRecords(recs);
+    addRecordRow(r);
+}
+
+// -------- 一次扣除並紀錄 --------
 function deductAll() {
-    let meal = document.getElementById('mealSelect').value;
-    let amounts = {
-        main: parseFloat(document.getElementById('amtMain').value) || 0,
-        meat: parseFloat(document.getElementById('amtMeat').value) || 0,
-        veg: parseFloat(document.getElementById('amtVeg').value) || 0,
-        fruit: parseFloat(document.getElementById('amtFruit').value) || 0
+    const meal = document.getElementById('mealSelect').value || meals[0];
+    const amounts = {
+        main: round1(parseFloat(document.getElementById('amtMain').value) || 0),
+        meat: round1(parseFloat(document.getElementById('amtMeat').value) || 0),
+        plant: round1(parseFloat(document.getElementById('amtPlant').value) || 0),
+        veg: round1(parseFloat(document.getElementById('amtVeg').value) || 0),
+        fiber: round1(parseFloat(document.getElementById('amtFiber').value) || 0),
+        fruit: round1(parseFloat(document.getElementById('amtFruit').value) || 0)
     };
-    for (let key in amounts) {
+    let changed = false;
+    for (const key in amounts) {
         if (amounts[key] > 0) {
             deduct(key, amounts[key]);
             recordMeal(meal, key, amounts[key]);
-            document.getElementById('amt' + key.charAt(0).toUpperCase() + key.slice(1)).value = '';
+            const input = document.getElementById('amt' + key.charAt(0).toUpperCase() + key.slice(1));
+            if (input) input.value = '';
+            changed = true;
         }
     }
-    updateRemainingDisplay();
+    if (changed) updateRemainingDisplay();
 }
 
+// -------- 啟動 --------
 window.addEventListener('DOMContentLoaded', function() {
     populateMealSelect();
+    loadSettingsToInputs();
     updateRemainingDisplay();
+    renderRecords();
 });
 </script>
 
