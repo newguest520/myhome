@@ -19,18 +19,23 @@
     .zero { background: #ffefef; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid2 label { display: flex; justify-content: space-between; align-items: center; }
+    .grid2 input { flex: 1; margin-left: 5px; }
 </style>
 </head>
 <body>
 
 <h2>每日總份量設定</h2>
-<div class="section" id="setup">
-    主食：<input type="number" id="totalMain" placeholder="份數" step="0.1">
-    肉類：<input type="number" id="totalMeat" placeholder="份數" step="0.1">
-    肉類（植物性蛋白）：<input type="number" id="totalPlant" placeholder="份數" step="0.1">
-    蔬菜：<input type="number" id="totalVeg" placeholder="份數" step="0.1">
-    蔬菜（水溶性纖維）：<input type="number" id="totalFiber" placeholder="份數" step="0.1">
-    水果：<input type="number" id="totalFruit" placeholder="份數" step="0.1">
+<div class="section">
+    <div class="grid2">
+        <label>主食：<input type="number" id="totalMain" placeholder="份數" step="0.1"></label>
+        <label>肉類：<input type="number" id="totalMeat" placeholder="份數" step="0.1"></label>
+        <label>肉類（植物性蛋白）：<input type="number" id="totalPlant" placeholder="份數" step="0.1"></label>
+        <label>蔬菜：<input type="number" id="totalVeg" placeholder="份數" step="0.1"></label>
+        <label>蔬菜（水溶性纖維）：<input type="number" id="totalFiber" placeholder="份數" step="0.1"></label>
+        <label>水果：<input type="number" id="totalFruit" placeholder="份數" step="0.1"></label>
+    </div>
     <button onclick="saveSettings()">儲存設定</button>
 </div>
 
@@ -127,7 +132,7 @@ function updateRemainingDisplay() {
         const el = document.getElementById('rem' + key.charAt(0).toUpperCase() + key.slice(1));
         if (el) {
             el.textContent = categories[key] + '：' + fmt(remaining[key]);
-            el.classList.toggle('zero', (remaining[key]||0) <= 0);
+            el.classList.toggle('zero', (remaining[key]||0) < 0);
         }
     }
 }
@@ -136,7 +141,6 @@ function deduct(category, amount) {
     const def = {main:0, meat:0, plant:0, veg:0, fiber:0, fruit:0};
     const remaining = Object.assign(def, JSON.parse(localStorage.getItem('remaining')||'{}'));
     if (remaining[category] != null) {
-        // 改為允許負數，不再強制 0 下限
         remaining[category] = round1((remaining[category]||0) - (amount||0));
     }
     localStorage.setItem('remaining', JSON.stringify(remaining));
@@ -152,7 +156,7 @@ function populateMealSelect() {
     });
 }
 
-// -------- 紀錄列表（含時間），存在 sessionStorage，頁面重啟（關閉）前不會消失 --------
+// -------- 紀錄列表 --------
 function nowString(){
     const d = new Date();
     const Y = d.getFullYear();
