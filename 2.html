@@ -112,6 +112,14 @@
   let remaining = JSON.parse(localStorage.getItem("remaining")) || { ...totals };
   let records = JSON.parse(sessionStorage.getItem("records")) || [];
 
+  const wallpapers = [
+    "https://images.pexels.com/photos/414171/pexels-photo-414171.jpeg",
+    "https://images.pexels.com/photos/34950/pexels-photo.jpg",
+    "https://images.pexels.com/photos/3408744/pexels-photo-3408744.jpeg",
+    "https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg",
+    "https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg"
+  ];
+
   function saveSettings() {
     totals = {
       main: parseFloat(document.getElementById("totalMain").value) || 0,
@@ -175,9 +183,8 @@
     });
   }
 
-  // 桌布隨機換
   function changeWallpaper() {
-    const url = `https://source.unsplash.com/random/1080x1920/?wallpaper,landscape,4k,background&sig=${Math.random()}`;
+    const url = wallpapers[Math.floor(Math.random() * wallpapers.length)];
     document.body.style.backgroundImage = `url('${url}')`;
   }
 
@@ -189,3 +196,4 @@
 </script>
 </body>
 </html>
+
