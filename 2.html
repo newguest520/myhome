@@ -16,9 +16,7 @@
       max-width: 600px;
       margin: auto;
     }
-    h2 {
-      margin-top: 20px;
-    }
+    h2 { margin-top: 20px; }
     .section {
       background: rgba(255, 255, 255, 0.85);
       padding: 15px;
@@ -70,6 +68,9 @@
       <label>蔬菜：<input type="number" id="totalVeg" step="0.1"></label>
       <label>蔬菜（水溶性纖維）：<input type="number" id="totalFiber" step="0.1"></label>
       <label>水果：<input type="number" id="totalFruit" step="0.1"></label>
+      <label>B群：<input type="number" id="totalB" step="0.1"></label>
+      <label>補充品名稱：<input type="text" id="suppName" placeholder="輸入名稱"></label>
+      <label><span id="suppLabel">補充品</span>：<input type="number" id="totalSupp" step="0.1"></label>
       <button class="btn" onclick="saveSettings()">儲存設定</button>
     </div>
 
@@ -91,6 +92,8 @@
       <label>蔬菜：<input type="number" id="deductVeg" step="0.1"></label>
       <label>蔬菜（水溶性纖維）：<input type="number" id="deductFiber" step="0.1"></label>
       <label>水果：<input type="number" id="deductFruit" step="0.1"></label>
+      <label>B群：<input type="number" id="deductB" step="0.1"></label>
+      <label><span id="suppLabel2">補充品</span>：<input type="number" id="deductSupp" step="0.1"></label>
       <button class="btn" onclick="deductAll()">扣除並紀錄</button>
     </div>
 
@@ -107,7 +110,7 @@
 
 <script>
   let totals = JSON.parse(localStorage.getItem("totals")) || {
-    main: 0, meat: 0, plant: 0, veg: 0, fiber: 0, fruit: 0
+    main: 0, meat: 0, plant: 0, veg: 0, fiber: 0, fruit: 0, b: 0, supp: 0, suppName: "補充品"
   };
   let remaining = JSON.parse(localStorage.getItem("remaining")) || { ...totals };
   let records = JSON.parse(sessionStorage.getItem("records")) || [];
@@ -127,11 +130,16 @@
       plant: parseFloat(document.getElementById("totalPlant").value) || 0,
       veg: parseFloat(document.getElementById("totalVeg").value) || 0,
       fiber: parseFloat(document.getElementById("totalFiber").value) || 0,
-      fruit: parseFloat(document.getElementById("totalFruit").value) || 0
+      fruit: parseFloat(document.getElementById("totalFruit").value) || 0,
+      b: parseFloat(document.getElementById("totalB").value) || 0,
+      supp: parseFloat(document.getElementById("totalSupp").value) || 0,
+      suppName: document.getElementById("suppName").value || "補充品"
     };
     remaining = { ...totals };
     localStorage.setItem("totals", JSON.stringify(totals));
     localStorage.setItem("remaining", JSON.stringify(remaining));
+    document.getElementById("suppLabel").textContent = totals.suppName;
+    document.getElementById("suppLabel2").textContent = totals.suppName;
     updateRemaining();
   }
 
@@ -143,7 +151,9 @@
       plant: parseFloat(document.getElementById("deductPlant").value) || 0,
       veg: parseFloat(document.getElementById("deductVeg").value) || 0,
       fiber: parseFloat(document.getElementById("deductFiber").value) || 0,
-      fruit: parseFloat(document.getElementById("deductFruit").value) || 0
+      fruit: parseFloat(document.getElementById("deductFruit").value) || 0,
+      b: parseFloat(document.getElementById("deductB").value) || 0,
+      supp: parseFloat(document.getElementById("deductSupp").value) || 0
     };
 
     for (let key in deduct) {
@@ -166,10 +176,12 @@
     section.innerHTML = `
       主食：<span class="${remaining.main<0?'negative':''}">${remaining.main}</span><br>
       肉類：<span class="${remaining.meat<0?'negative':''}">${remaining.meat}</span><br>
-      肉類（植物性蛋白）：<span class="${remaining.plant<0?'negative':''}">${remaining.plant}</span><br>
+      植物性蛋白：<span class="${remaining.plant<0?'negative':''}">${remaining.plant}</span><br>
       蔬菜：<span class="${remaining.veg<0?'negative':''}">${remaining.veg}</span><br>
-      蔬菜（水溶性纖維）：<span class="${remaining.fiber<0?'negative':''}">${remaining.fiber}</span><br>
-      水果：<span class="${remaining.fruit<0?'negative':''}">${remaining.fruit}</span>
+      水溶性纖維：<span class="${remaining.fiber<0?'negative':''}">${remaining.fiber}</span><br>
+      水果：<span class="${remaining.fruit<0?'negative':''}">${remaining.fruit}</span><br>
+      B群：<span class="${remaining.b<0?'negative':''}">${remaining.b}</span><br>
+      ${totals.suppName}：<span class="${remaining.supp<0?'negative':''}">${remaining.supp}</span>
     `;
   }
 
@@ -178,7 +190,7 @@
     list.innerHTML = "";
     records.forEach(r => {
       let li = document.createElement("li");
-      li.textContent = `${r.time} 【${r.meal}】 主食:${r.deduct.main}, 肉類:${r.deduct.meat}, 植物蛋白:${r.deduct.plant}, 蔬菜:${r.deduct.veg}, 水溶纖維:${r.deduct.fiber}, 水果:${r.deduct.fruit}`;
+      li.textContent = `${r.time} 【${r.meal}】 主食:${r.deduct.main}, 肉類:${r.deduct.meat}, 植物蛋白:${r.deduct.plant}, 蔬菜:${r.deduct.veg}, 水溶纖維:${r.deduct.fiber}, 水果:${r.deduct.fruit}, B群:${r.deduct.b}, ${totals.suppName}:${r.deduct.supp}`;
       list.appendChild(li);
     });
   }
@@ -189,6 +201,8 @@
   }
 
   window.onload = () => {
+    document.getElementById("suppLabel").textContent = totals.suppName;
+    document.getElementById("suppLabel2").textContent = totals.suppName;
     updateRemaining();
     updateRecords();
     changeWallpaper();
@@ -196,4 +210,3 @@
 </script>
 </body>
 </html>
-
